@@ -33,7 +33,7 @@ def UserRecommend(year: Union[int,None] = None):
         return '{"message":"Es necesario el año para seguir con su consulta"}'
     
     games = pd.read_parquet('DatasetFinal/games.parquet')
-    recomendacion = pd.read_parquet('DatasetFinal/recomendacion.parquet')
+    recomendacion = pd.read_parquet('DatasetFinal/reviews.parquet')
 
     games_year = games[games['año'] == str(year)]
 
@@ -44,15 +44,39 @@ def UserRecommend(year: Union[int,None] = None):
     for i in games_year['id']:
         scores = recomendacion[recomendacion['item_id'] == i]
         value = scores['recommend'].value_counts()
-        if value.__len__() == 0:
-            continue
+        sentiment = scores['sentiment'].value_counts()
+        if sentiment.empty:
+            if value.empty:
+                continue
+            else:
+                if value.__len__() == 1:
+                    j = value.keys()
+                    for k in j:
+                        if k:
+                            recomendaciones.append({"id":i,"value":value[True]})
+                else:
+                    recomendaciones.append({"id":i,"value":value[True]})
         else:
-            if value.__len__() == 1:
-                j = value.keys()
-                for k in j:
-                    if k:
-                        recomendaciones.append({"id":i,"value":value[True]})
-    
+            if value.empty:
+                continue
+            else:
+                if value.__len__() == 1:
+                    j = value.keys()
+                    s = sentiment.keys()
+                    aux = 0
+                    for s2 in s:
+                        if s2 == 1 | s2 == 2:
+                           aux = sentiment[1] + sentiment[2] 
+                    for k in j:
+                        if k:
+                            recomendaciones.append({"id":i,"value":value[True] + aux})
+                else:
+                    s = sentiment.keys()
+                    aux = 0
+                    for s2 in s:
+                        if s2 == 1 | s2 == 2:
+                           aux = sentiment[1] + sentiment[2] 
+                    recomendaciones.append({"id":i,"value":value[True] + aux})
     recomendaciones = sorted(recomendaciones, reverse=True, key= lambda x:x['value'])
     nombres = []
     for i in recomendaciones[0:3]:
@@ -69,7 +93,7 @@ def UsersWorstDeveloper(year: Union[int,None] = None):
         return '{"message":"Es necesario el año para seguir con su consulta"}'
     
     developer = pd.read_parquet('DatasetFinal/games.parquet')
-    recomendacion = pd.read_parquet('DatasetFinal/recomendacion.parquet')
+    recomendacion = pd.read_parquet('DatasetFinal/reviews.parquet')
 
     developer_year = developer[developer['año'] == str(year)]
 
@@ -80,14 +104,39 @@ def UsersWorstDeveloper(year: Union[int,None] = None):
     for i in developer_year['id']:
         scores = recomendacion[recomendacion['item_id'] == i]
         value = scores['recommend'].value_counts()
-        if value.__len__() == 0:
-            continue
+        sentiment = scores['sentiment'].value_counts()
+        if sentiment.empty:
+            if value.empty:
+                continue
+            else:
+                if value.__len__() == 1:
+                    j = value.keys()
+                    for k in j:
+                        if (not k):
+                            recomendaciones.append({"id":i,"value":value[False]})
+                else:
+                    recomendaciones.append({"id":i,"value":value[False]})
         else:
-            if value.__len__() == 1:
-                j = value.keys()
-                for k in j:
-                    if (not k):
-                        recomendaciones.append({"id":i,"value":value[False]})
+            if value.empty:
+                continue
+            else:
+                if value.__len__() == 1:
+                    j = value.keys()
+                    s = sentiment.keys()
+                    aux = 0
+                    for s2 in s:
+                        if s2 == 0:
+                           aux = sentiment[0] 
+                    for k in j:
+                        if (not k):
+                            recomendaciones.append({"id":i,"value":value[False] + aux})
+                else:
+                    s = sentiment.keys()
+                    aux = 0
+                    for s2 in s:
+                        if s2 == 0:
+                           aux = sentiment[0] 
+                    recomendaciones.append({"id":i,"value":value[False] + aux})
     
     recomendaciones = sorted(recomendaciones, reverse=True, key= lambda x:x['value'])
     nombres = []
@@ -105,18 +154,50 @@ def SentimentAnalysis(eDesarrolladora: Union[str,None] = None):
         return '{"message":"Es necesario el nombre de la empresa desarrolladora para seguir con su consulta"}'
     
     developer = pd.read_parquet('DatasetFinal/games.parquet')
-    recomendacion = pd.read_parquet('DatasetFinal/recomendacion.parquet')
+    recomendacion = pd.read_parquet('DatasetFinal/reviews.parquet')
 
     developer_year = developer[developer['developer'] == eDesarrolladora]
 
     if developer_year.empty:
         return {'error':f'No existen el desarrollador seleccionado. Año:{eDesarrolladora}'}
-    # verificar que existe la empresa que se está mandando
+    
+    developer_filtered = developer[developer['developer'] == eDesarrolladora]
 
-    # buscar en el archivo donde se tienen los datos limpios
+    if developer_filtered.empty:
+        return {'error': f'La empresa desarrolladora no existe en los datos actuales. Empresa {eDesarrolladora}'}
+    
+    sentiment_total = []
+    for game in developer_filtered['id']:
+        scores = recomendacion[recomendacion['item_id'] == game]
+        sentiment = scores['sentiment'].value_counts()
+        if sentiment.empty:
+            continue
+        else:
+            print(sentiment)
+            pos = 0
+            neg = 0
+            neu = 0
+            if sentiment.__len__() == 3:
+                sentiment_total.append({"neg":sentiment[0],"neu":sentiment[1],"pos":sentiment[2]})
+            elif sentiment.__len__() < 3:
+                for s in sentiment:
+                    if s == 2:
+                        pos = s
+                    elif s == 1:
+                        neu = s
+                    elif s == 0:
+                        neg = s
+                sentiment_total.append({"neg":neg,"neu":neu,"pos":pos})
 
-    # retornar resultado
-    # return {eDesarrolladora:f'Negativo:{sal['neg']}, Neutro:{sal['neu']}, Positivo:{sal['pos']}'}
-    pass
+    neutro = 0
+    positivo = 0
+    negativo = 0
+
+    for s in sentiment_total:
+        neutro += s['neu']
+        positivo += s['pos']
+        negativo += s['neg']
+
+    return {f'Empresa {eDesarrolladora}': f'Negativo: {negativo}, Neutro: {neutro}, Positivo: {positivo}'}
 # Fin
 # Comienzo
