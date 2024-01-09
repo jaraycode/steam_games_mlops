@@ -83,7 +83,7 @@ def UserRecommend(year: Union[int,None] = None):
         df = games_year[games_year['id'] == i['id']]
         nombres.append(df['title'].values)
 
-    return {"mensaje":f'Los juegos mas recomendados en {year} son: 1: {nombres[0][0]}, 2: {nombres[1][0]}, 3: {nombres[2][0]}'}
+    return [{'Puesto 1': nombres[0][0]}, {'Puesto 2': nombres[1][0]}, {'Puesto 3': nombres[2][0]}]
 # Fin
 # Comienzo
 @app.get('/usersWorstDeveloper/{year:int}')
@@ -143,8 +143,7 @@ def UsersWorstDeveloper(year: Union[int,None] = None):
     for i in recomendaciones[0:3]:
         df = developer_year[developer_year['id'] == i['id']]
         nombres.append(df['developer'].values)
-
-    return {"mensaje":f'Los desarrolladores menos recomendados en {year} son: 1: {nombres[0][0]}, 2: {nombres[1][0]}, 3: {nombres[2][0]}'}
+    return [{'Puesto 1': nombres[0][0]}, {'Puesto 2': nombres[1][0]}, {'Puesto 3': nombres[2][0]}]
 # Fin
 # Comienzo
 @app.get('/sentimentAnalysis/{eDesarrolladora:str}')
@@ -198,6 +197,6 @@ def SentimentAnalysis(eDesarrolladora: Union[str,None] = None):
         positivo += s['pos']
         negativo += s['neg']
 
-    return {f'Empresa {eDesarrolladora}': f'Negativo: {negativo}, Neutro: {neutro}, Positivo: {positivo}'}
+    return {f'{eDesarrolladora}': [f'Negativo = {negativo}', f'Neutro = {neutro}', f'Positivo = {positivo}']}
 # Fin
 # Comienzo
