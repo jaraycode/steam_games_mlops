@@ -12,7 +12,16 @@ def PlayTimeGenre(genero:Union[str, None] = None):
     '''Debe regresar el año con más tiempo de juego según el genero que se esté trayendo.'''
     if genero == None:
         return '{"message":"Es necesario el genero para seguir con su consulta"}'
-    
+    try:
+        playtime = pd.read_parquet('DatasetFinal/playtime.parquet')
+
+        playtime = playtime[playtime['genero'] == genero]
+
+        playtime = playtime.sort_values(by='horas',ascending=False)
+
+        return {f"Año de lanzamiento con más horas jugadas del genero {genero}":f"{playtime['año'].values[0]}"}
+    except:
+        return {"Error":"El genero no existe dentro del dataset"}
 
     pass
 
@@ -21,8 +30,6 @@ def UserForGenre(genero: Union[str,None] = None):
     '''Retorna el usuario con más horas jugadas por genero, desglozado en las horas que jugó por año.'''
     if genero == None:
         return '{"message":"Es necesario el genero para seguir con su consulta"}'
-    
-
     pass
 # Fin
 # Comienzo
