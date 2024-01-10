@@ -1,0 +1,11 @@
+version: '1.0'
+
+services:
+  fastapi_soyhenry:
+    image: jearay/steam_games_mlops
+    build: .
+    container_name: mlops
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app/
