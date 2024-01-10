@@ -4,4 +4,6 @@ Dataset
 Diccionario de Datos STEAM.xlsx
 ETL2.ipynb
 requierment.txt
-docker-compose.yml
+docker-compose.yaml
+.dockerignore
+dockerfile
